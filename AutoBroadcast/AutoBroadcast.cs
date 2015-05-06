@@ -30,6 +30,7 @@ namespace AutoBroadcast
 		{
 			ServerApi.Hooks.GameInitialize.Register(this, OnInitialize, -5);
 			ServerApi.Hooks.ServerChat.Register(this, OnChat);
+            TShockAPI.Hooks.RegionHooks.RegionEntered += OnRegionEnter;
 		}
 
 		protected override void Dispose(bool Disposing)
@@ -38,6 +39,7 @@ namespace AutoBroadcast
 			{
 				ServerApi.Hooks.GameInitialize.Deregister(this, OnInitialize);
 				ServerApi.Hooks.ServerChat.Deregister(this, OnChat);
+                TShockAPI.Hooks.RegionHooks.RegionEntered -= OnRegionEnter;
 				Update.Elapsed -= OnUpdate;
 				Update.Stop();
 			}
@@ -118,8 +120,37 @@ namespace AutoBroadcast
 		}
 		#endregion
 
-		#region Update
-		public void OnUpdate(object Sender, EventArgs e)
+        #region RegionEnter
+        public void OnRegionEnter(TShockAPI.Hooks.RegionHooks.RegionEnteredEventArgs args)
+        {
+            var Start = DateTime.Now;
+            var PlayerGroup = args.Player.Group.Name;
+
+            lock (Config.Broadcasts)
+                foreach (Broadcast broadcast in Config.Broadcasts)
+                {
+                    if (Timeout(Start)) return;
+                    if (broadcast == null || !broadcast.Enabled || !broadcast.Groups.Contains(PlayerGroup)) continue;
+
+                    foreach (string reg in broadcast.TriggerRegions)
+                    {
+                        if (args.Player.CurrentRegion.Name == reg)
+                        {
+                            if (broadcast.RegionTrigger == "all")
+                                BroadcastToAll(broadcast.Messages, broadcast.ColorRGB);
+                            else if (broadcast.RegionTrigger == "region")
+                                BroadcastToRegion(reg, broadcast.Messages, broadcast.ColorRGB);
+                            else if (broadcast.RegionTrigger == "self")
+                                BroadcastToPlayer(args.Player.Index, broadcast.Messages, broadcast.ColorRGB);
+
+                        }
+                    }
+                }
+        }
+        #endregion
+
+        #region Update
+        public void OnUpdate(object Sender, EventArgs e)
 		{
 			if (Main.worldID == 0) return;
 			if (ULock) return;
@@ -187,6 +218,24 @@ namespace AutoBroadcast
 				}
 			}
 		}
+        public static void BroadcastToRegion(string region, string[] Messages, float[] Colour)
+        {
+            foreach (string Line in Messages)
+            {
+                if (Line.StartsWith(TShock.Config.CommandSpecifier) || Line.StartsWith(TShock.Config.CommandSilentSpecifier))
+                {
+                    Commands.HandleCommand(TSPlayer.Server, Line);
+                }
+                else
+                {
+                    var players = from TSPlayer plr in TShock.Players where plr != null && plr.CurrentRegion != null && plr.CurrentRegion.Name == region select plr;
+                    foreach (TSPlayer plr in players)
+                    {
+                        plr.SendMessage(Line, (byte)Colour[0], (byte)Colour[1], (byte)Colour[2]);
+                    }
+                }
+            }
+        }
 		public static void BroadcastToAll(string[] Messages, float[] Colour)
 		{
 			foreach (string Line in Messages)
