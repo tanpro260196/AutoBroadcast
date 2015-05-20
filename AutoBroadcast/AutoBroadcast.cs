@@ -132,16 +132,24 @@ namespace AutoBroadcast
                     if (Timeout(Start)) return;
                     if (broadcast == null || !broadcast.Enabled || !broadcast.Groups.Contains(PlayerGroup)) continue;
 
+                    string[] msgs = broadcast.Messages;
+
+                    for (int i = 0; i < msgs.Length; i++ )
+                    {
+                        msgs[i] = msgs[i].Replace("{player}", args.Player.Name);
+                        msgs[i] = msgs[i].Replace("{region}", args.Player.CurrentRegion.Name);
+                    }
+
                     foreach (string reg in broadcast.TriggerRegions)
                     {
                         if (args.Player.CurrentRegion.Name == reg)
                         {
                             if (broadcast.RegionTrigger == "all")
-                                BroadcastToAll(broadcast.Messages, broadcast.ColorRGB);
+                                BroadcastToAll(msgs, broadcast.ColorRGB);
                             else if (broadcast.RegionTrigger == "region")
-                                BroadcastToRegion(reg, broadcast.Messages, broadcast.ColorRGB);
+                                BroadcastToRegion(reg, msgs, broadcast.ColorRGB);
                             else if (broadcast.RegionTrigger == "self")
-                                BroadcastToPlayer(args.Player.Index, broadcast.Messages, broadcast.ColorRGB);
+                                BroadcastToPlayer(args.Player.Index, msgs, broadcast.ColorRGB);
 
                         }
                     }
