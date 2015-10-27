@@ -212,7 +212,7 @@ namespace AutoBroadcast
 					Colour = Config.Broadcasts[i].ColorRGB;
 				}
 
-				if (Groups.Length > 0)
+                if (Groups.Length > 0)
 				{
 					BroadcastToGroups(Groups, Messages, Colour);
 				}
@@ -238,10 +238,12 @@ namespace AutoBroadcast
 					lock (TShock.Players)
 						foreach (var player in TShock.Players)
 						{
-
                             if (player != null && (Groups.Contains(player.Group.Name) || Groups[0] == "all"))
 							{
-								player.SendMessage(Line, (byte)Colour[0], (byte)Colour[1], (byte)Colour[2]);
+                                string msg = Line;
+                                msg = msg.Replace("{player}", player.Name);
+
+                                player.SendMessage(msg, (byte)Colour[0], (byte)Colour[1], (byte)Colour[2]);
 							}
 						}
 				}
@@ -275,7 +277,16 @@ namespace AutoBroadcast
 				}
 				else
 				{
-					TSPlayer.All.SendMessage(Line, (byte)Colour[0], (byte)Colour[1], (byte)Colour[2]);
+                    foreach (TSPlayer plr in TShock.Players)
+                    {
+                        if (plr != null)
+                        {
+                            string msg = Line;
+                            msg = msg.Replace("{player}", plr.Name);
+
+                            plr.SendMessage(msg, (byte)Colour[0], (byte)Colour[1], (byte)Colour[2]);
+                        }
+                    }
 				}
 			}
 		}
@@ -289,7 +300,9 @@ namespace AutoBroadcast
 				}
 				else lock(TShock.Players)
 				{
-					TShock.Players[plr].SendMessage(Line, (byte)Colour[0], (byte)Colour[1], (byte)Colour[2]);
+                        string msg = Line;
+                        msg = msg.Replace("{player}", TShock.Players[plr].Name);
+                        TShock.Players[plr].SendMessage(msg, (byte)Colour[0], (byte)Colour[1], (byte)Colour[2]);
 				}
 			}
 		}
