@@ -9,7 +9,7 @@ using TShockAPI;
 
 namespace AutoBroadcast
 {
-	[ApiVersion(1, 21)]
+	[ApiVersion(1, 22)]
 	public class AutoBroadcast : TerrariaPlugin
 	{
 		public override string Name { get { return "AutoBroadcast"; } }
@@ -93,7 +93,14 @@ namespace AutoBroadcast
 					if (Timeout(Start)) return;
 					if (broadcast == null || !broadcast.Enabled || !broadcast.Groups.Contains(PlayerGroup)) continue;
 
-					foreach (string Word in broadcast.TriggerWords)
+                    string[] msgs = broadcast.Messages;
+
+                    for (int i = 0; i < msgs.Length; i++)
+                    {
+                        msgs[i] = msgs[i].Replace("{player}", TShock.Players[args.Who].Name);
+                    }
+
+                    foreach (string Word in broadcast.TriggerWords)
 					{
 						if (Timeout(Start)) return;
 						if (args.Text.Contains(Word))
@@ -108,6 +115,19 @@ namespace AutoBroadcast
 						}
 					}
 				}
+
+            bool all = false;
+
+            foreach (string i in Groups)
+            {
+                if (i == "*")
+                    all = true;
+            }
+
+            if (all)
+            {
+                Groups = new string[1] { "all" };
+            }
 
 			if (Groups.Length > 0)
 			{
@@ -218,7 +238,8 @@ namespace AutoBroadcast
 					lock (TShock.Players)
 						foreach (var player in TShock.Players)
 						{
-							if (player != null && Groups.Contains(player.Group.Name))
+
+                            if (player != null && (Groups.Contains(player.Group.Name) || Groups[0] == "all"))
 							{
 								player.SendMessage(Line, (byte)Colour[0], (byte)Colour[1], (byte)Colour[2]);
 							}
