@@ -1,4 +1,9 @@
-﻿using System;
+﻿/*
+ * Original plugin by Scavenger.
+ * 
+ */
+
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -9,11 +14,11 @@ using TShockAPI;
 
 namespace AutoBroadcast
 {
-	[ApiVersion(1, 22)]
+	[ApiVersion(1, 23)]
 	public class AutoBroadcast : TerrariaPlugin
 	{
 		public override string Name { get { return "AutoBroadcast"; } }
-		public override string Author { get { return "Scavenger"; } }
+		public override string Author { get { return "Maintained by Zaicon"; } }
 		public override string Description { get { return "Automatically Broadcast a Message or Command every x seconds"; } }
 		public override Version Version { get { return Assembly.GetExecutingAssembly().GetName().Version; } }
 
@@ -22,7 +27,7 @@ namespace AutoBroadcast
 
 		public AutoBroadcast(Main Game) : base(Game) { }
 
-		static readonly Timer Update = new System.Timers.Timer(1000);
+		static readonly Timer Update = new Timer(1000);
 		public static bool ULock = false;
 		public const int UpdateTimeout = 501;
 
@@ -74,7 +79,7 @@ namespace AutoBroadcast
 			{
 				Config = new ABConfig();
 				args.Player.SendWarningMessage("An exception occurred while parsing the AutoBroadcast config! check logs for more details!");
-				TShock.Log.Error("[AutoBroadcast] An exception occurred while parsing tbe AutoBroadcast config!\n{0}".SFormat(ex.ToString()));
+				TShock.Log.Error("[AutoBroadcast] An exception occurred while parsing the AutoBroadcast config!\n{0}".SFormat(ex.ToString()));
 			}
 		}
 
@@ -211,6 +216,19 @@ namespace AutoBroadcast
 					Messages = Config.Broadcasts[i].Messages;
 					Colour = Config.Broadcasts[i].ColorRGB;
 				}
+
+                bool all = false;
+
+                foreach (string j in Groups)
+                {
+                    if (j == "*")
+                        all = true;
+                }
+
+                if (all)
+                {
+                    Groups = new string[1] { "all" };
+                }
 
                 if (Groups.Length > 0)
 				{
