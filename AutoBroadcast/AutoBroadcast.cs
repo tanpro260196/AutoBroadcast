@@ -87,16 +87,17 @@ namespace AutoBroadcast
 		public void OnChat(ServerChatEventArgs args)
 		{
 			var Start = DateTime.Now;
-			string[] Groups = new string[0];
-			string[] Messages = new string[0];
-			float[] Colour = new float[0];
 			var PlayerGroup = TShock.Players[args.Who].Group.Name;
 
 			lock (Config.Broadcasts)
 				foreach (var broadcast in Config.Broadcasts)
 				{
+					string[] Groups = new string[0];
+					string[] Messages = new string[0];
+					float[] Colour = new float[0];
+
 					if (Timeout(Start)) return;
-					if (broadcast == null || !broadcast.Enabled || !broadcast.Groups.Contains(PlayerGroup)) continue;
+					if (broadcast == null || !broadcast.Enabled || (!broadcast.Groups.Contains(PlayerGroup)) && !broadcast.Groups.Contains("*")) continue;
 
                     string[] msgs = broadcast.Messages;
 
@@ -119,29 +120,29 @@ namespace AutoBroadcast
 							break;
 						}
 					}
+
+					bool all = false;
+
+					foreach (string i in Groups)
+					{
+						if (i == "*")
+							all = true;
+					}
+
+					if (all)
+					{
+						Groups = new string[1] { "*" };
+					}
+
+					if (Groups.Length > 0)
+					{
+						BroadcastToGroups(Groups, Messages, Colour);
+					}
+					else
+					{
+						BroadcastToPlayer(args.Who, Messages, Colour);
+					}
 				}
-
-            bool all = false;
-
-            foreach (string i in Groups)
-            {
-                if (i == "*")
-                    all = true;
-            }
-
-            if (all)
-            {
-                Groups = new string[1] { "all" };
-            }
-
-			if (Groups.Length > 0)
-			{
-				BroadcastToGroups(Groups, Messages, Colour);
-			}
-			else
-			{
-				BroadcastToPlayer(args.Who, Messages, Colour);
-			}
 		}
 		#endregion
 
@@ -227,7 +228,7 @@ namespace AutoBroadcast
 
                 if (all)
                 {
-                    Groups = new string[1] { "all" };
+                    Groups = new string[1] { "*" };
                 }
 
                 if (Groups.Length > 0)
@@ -256,7 +257,7 @@ namespace AutoBroadcast
 					lock (TShock.Players)
 						foreach (var player in TShock.Players)
 						{
-                            if (player != null && (Groups.Contains(player.Group.Name) || Groups[0] == "all"))
+                            if (player != null && (Groups.Contains(player.Group.Name) || Groups[0] == "*"))
 							{
                                 string msg = Line;
                                 msg = msg.Replace("{player}", player.Name);
